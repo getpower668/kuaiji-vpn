@@ -1,0 +1,63 @@
+name: Sync Free Nodes
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/sync-nodes.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Fetch & merge free node sources
+        run: |
+          mkdir -p dist
+          : > dist/v2ray.txt
+          : > dist/metadata.txt
+          TOTAL=0
+          declare -a SOURCES=(
+            "Freedom-V2Ray|https://raw.githubusercontent.com/MahanKenway/Freedom-V2Ray/main/Configs/v2ray.txt"
+            "0xRadikal|https://raw.githubusercontent.com/0xRadikal/Free-v2ray-Configs/main/All_Configs_Sub.txt"
+            "wenxig|https://raw.githubusercontent.com/wenxig/free-nodes-sub/main/v2ray.txt"
+            "Alirewa|https://raw.githubusercontent.com/Alirewa/V2ray-Configs/main/v2ray.txt"
+          )
+          for entry in "${SOURCES[@]}"; do
+            name="${entry%%|*}"
+            url="${entry##*|}"
+            echo "--- $name :: $url ---"
+            count=$(curl -fsSL --max-time 45 "$url" 2>/dev/null | tee -a dist/v2ray.txt | wc -l || echo 0)
+            echo "$name: +$count lines" >> dist/metadata.txt
+            TOTAL=$((TOTAL + count))
+          done
+          awk 'NF && !seen[$0]++' dist/v2ray.txt > dist/v2ray.dedup.txt && mv dist/v2ray.dedup.txt dist/v2ray.txt
+          DEDUP=$(wc -l < dist/v2ray.txt)
+          printf "\nTOTAL_RAW=%s\nDEDUP=%s\nTIMESTAMP=%s\n" "$TOTAL" "$DEDUP" "$(date -u +%FT%TZ)" >> dist/metadata.txt
+          cat dist/metadata.txt
+          echo "Final node count: $DEDUP"
+
+      - name: Commit
+        run: |
+          git config user.name "node-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add dist/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          TS=$(date -u +%FT%TZ)
+          git commit -m "chore(sync): update free nodes @ ${TS}"
+          git push

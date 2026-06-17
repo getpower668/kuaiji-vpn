@@ -42,10 +42,48 @@ object SettingsManager {
 
     fun initApp(context: Context) {
         ensureDefaultSettings()
-        //ensureDefaultSubscription()
+        ensureDefaultSubscription()
+        preloadFreeSubscriptions()
         initRoutingRulesets(context)
         migrateServerListToSubscriptions()
         migrateHysteria2PinSHA256()
+    }
+
+    /**
+     * Preload built-in free subscriptions on first run.
+     * Idempotent: skipped if a subscription with the same remarks already exists.
+     */
+    private fun preloadFreeSubscriptions() {
+        val freeSubs = listOf(
+            SubscriptionItem(
+                remarks = "Free-1 (Freedom-V2Ray)",
+                url = "https://raw.githubusercontent.com/MahanKenway/Freedom-V2Ray/main/Configs/v2ray.txt",
+                enabled = true,
+                autoUpdate = true,
+                updateInterval = 360L
+            ),
+            SubscriptionItem(
+                remarks = "Free-2 (0xRadikal)",
+                url = "https://raw.githubusercontent.com/0xRadikal/Free-v2ray-Configs/main/All_Configs_Sub.txt",
+                enabled = true,
+                autoUpdate = true,
+                updateInterval = 360L
+            ),
+            SubscriptionItem(
+                remarks = "Free-3 (wenxig)",
+                url = "https://raw.githubusercontent.com/wenxig/free-nodes-sub/main/v2ray.txt",
+                enabled = true,
+                autoUpdate = true,
+                updateInterval = 360L
+            )
+        )
+        val existing = decodeSubsList().mapNotNull { decodeSubscription(it.first) }
+        val existingRemarks = existing.map { it.remarks }.toHashSet()
+        freeSubs.forEach { sub ->
+            if (sub.remarks !in existingRemarks && sub.url.isNotBlank()) {
+                encodeSubscription(UUID.randomUUID().toString(), sub)
+            }
+        }
     }
 
     /**
