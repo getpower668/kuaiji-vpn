@@ -33,6 +33,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.Collections
 import java.util.Locale
+import java.util.UUID
 import kotlin.random.Random
 
 object SettingsManager {
@@ -77,13 +78,13 @@ object SettingsManager {
                 updateInterval = 360L
             )
         )
-        val existing = decodeSubsList().mapNotNull { decodeSubscription(it.first) }
-        val existingRemarks = existing.map { it.remarks }.toHashSet()
-        freeSubs.forEach { sub ->
-            if (sub.remarks !in existingRemarks && sub.url.isNotBlank()) {
-                encodeSubscription(UUID.randomUUID().toString(), sub)
-            }
-        }
+        val existing = decodeSubsList().mapNotNull { decodeSubscription(it) }
+                val existingRemarks = existing.map { it.remarks }.toHashSet()
+                freeSubs.forEach { sub ->
+                    if (sub.remarks !in existingRemarks && sub.url.isNotBlank()) {
+                        encodeSubscription(Utils.getUuid(), sub)
+                    }
+                }
     }
 
     /**
