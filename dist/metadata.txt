@@ -1,8 +1,9 @@
-Freedom-V2Ray: +0 lines
-0xRadikal: +0 lines
-wenxig: +0 lines
-Alirewa: +0 lines
-
-TOTAL_RAW=0
-DEDUP=0
-TIMESTAMP=2026-06-18T10:17:21Z
+# 快极VPN auto-sync metadata
+last_sync: 2026-06-18T14:14:04.580442Z
+source: mahdibland-merge (4617) + miladtahanian-V2Ray (58)
+tcp_alive_filter: yes
+se_asia_priority: yes
+se_asia_count: 32
+non_se_count: 205
+total_active: 237
+next_sync: 6h cron
