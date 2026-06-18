@@ -1,0 +1,74 @@
+port: 7890
+socks-port: 7891
+allow-lan: false
+mode: rule
+log-level: info
+proxies:
+  - name: "01-trojan-\U0001F534\U0001F1E9\U0001F1EA[\U0001F3
+    type: trojan
+    server: 103.177.136.45
+    port: 46424
+  - name: "02-trojan-\U0001F534\U0001F1E6\U0001F1FF[\U0001F3
+    type: trojan
+    server: 103.177.136.42
+    port: 41943
+  - name: "03-trojan-\U0001F534\U0001F1EE\U0001F1F8[\U0001F3
+    type: trojan
+    server: 103.177.136.42
+    port: 47909
+  - name: 04-trojan-⚡ b2n.ir/v2ray-configs | 987
+    type: trojan
+    server: 103.177.136.45
+    port: 47909
+  - name: "05-trojan-\U0001F534\U0001F1E8\U0001F1ED[\U0001F3
+    type: trojan
+    server: 103.177.136.42
+    port: 45553
+  - name: "06-trojan-\U0001F534\U0001F1E8\U0001F1ED[\U0001F3
+    type: trojan
+    server: 103.177.136.45
+    port: 45553
+  - name: "07-trojan-\U0001F534\U0001F1EB\U0001F1F7[\U0001F3
+    type: trojan
+    server: 103.177.136.42
+    port: 45619
+  - name: "08-trojan-\U0001F534\U0001F1E9\U0001F1EA[\U0001F3
+    type: trojan
+    server: 103.177.136.42
+    port: 46424
+  - name: "09-trojan-\U0001F534\U0001F1EC\U0001F1ED[\U0001F3
+    type: trojan
+    server: 103.177.136.42
+    port: 48697
+  - name: "10-trojan-\U0001F534\U0001F1EC\U0001F1ED[\U0001F3
+    type: trojan
+    server: 103.177.136.45
+    port: 48697
+  - name: "11-trojan-\U0001F534\U0001F1EB\U0001F1F7[\U0001F3
+    type: trojan
+    server: 103.177.136.45
+    port: 45619
+  - name: "12-trojan-\U0001F534\U0001F1E6\U0001F1FF[\U0001F3
+    type: trojan
+    server: 103.177.136.45
+    port: 41943
+  - name: "01-trojan-@tootffarangi\U0001F353"
+    type: trojan
+    server: 151.101.110.219
+    port: 443
+  - name: "07-trojan-\U0001F1EF\U0001F1F5JP-103.125.219.70-0
+    type: trojan
+    server: 103.125.219.70
+    port: 443
+  - name: "19-trojan-\U0001F1FA\U0001F1F876456 | ⚡️Telegram 
+    type: trojan
+    server: 207.126.167.241
+    port: 443
+  - name: "20-trojan-\U0001F1F3\U0001F1F1 NL 1"
+    type: trojan
+    server: 144.31.55.10
+    port: 10295
+  - name: "21-trojan-@tootffarangi\U0001F353"
+    type: trojan
+    server: 151.101.1.194
+    port: 443
