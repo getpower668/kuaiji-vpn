@@ -2,13 +2,11 @@ name: Build APK
 
 on:
   workflow_dispatch:
-    inputs:
-      release_tag:
-        required: false
-        type: string
   push:
-    branches:
-      - master
+    branches: [ master ]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -16,11 +14,11 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
-          fetch-depth: '0'
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
@@ -28,102 +26,65 @@ jobs:
           log-accepted-android-sdk-licenses: false
           cmdline-tools-version: '14742923'
           packages: 'platforms;android-37.0 build-tools;37.0.0 platform-tools'
+          java-versions: |
 
       - name: Install NDK
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-            --channel=0 \
-            --install "ndk;29.0.14206865"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            --channel=0 --install "ndk;29.0.14206865"
           echo "NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
 
-      - name: Restore cached libhevtun
-        id: cache-libhevtun-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/libs
-          key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
-
       - name: Build libhevtun
-        if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
-        run: bash compile-hevtun.sh
+        run: |
+          bash compile-hevtun.sh
+          cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
 
-      - name: Save libhevtun
-        if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ github.workspace }}/libs
-          key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
-
-      - name: Copy libhevtun
-        run: cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
-
-      - name: Fetch AndroidLibXrayLite tag
+      - name: Download libv2ray.aar
         run: |
           pushd AndroidLibXrayLite
           CURRENT_TAG=$(git describe --tags --abbrev=0)
-          echo "Current tag: $CURRENT_TAG"
-          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
-          popd
-
-      - name: Download libv2ray
-        run: |
-          curl -fsSL -o ${{ github.workspace }}/V2rayNG/app/libs/libv2ray.aar \
+          echo "Using libv2ray tag: $CURRENT_TAG"
+          curl -sSL -o ${{ github.workspace }}/V2rayNG/app/libs/libv2ray.aar \
             "https://github.com/2dust/AndroidLibXrayLite/releases/download/${CURRENT_TAG}/libv2ray.aar"
-          ls -lh ${{ github.workspace }}/V2rayNG/app/libs/libv2ray.aar
+          ls -lah ${{ github.workspace }}/V2rayNG/app/libs/
+          popd
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
 
-      - name: Generate self-signed keystore
+      - name: Generate release keystore
         run: |
-          keytool -genkeypair -v \
-            -keystore release.jks \
-            -alias kuaiji \
+          keytool -genkey -v \
+            -keystore release.jks -alias kuaiji \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass kuaiji123 -keypass kuaiji123 \
-            -dname "CN=Kuaiji VPN, OU=Kuaiji, O=Kuaiji, L=NA, S=NA, C=NA"
-          echo "KEYSTORE_FILE=${{ github.workspace }}/release.jks" >> $GITHUB_ENV
+            -dname "CN=Kuaiji, OU=VPN, O=Kuaiji, L=City, S=State, C=CN"
 
       - name: Build release APK
-        working-directory: V2rayNG
         run: |
+          cd ${{ github.workspace }}/V2rayNG
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
           chmod 755 gradlew
-          ./gradlew licenseFdroidReleaseReport
           ./gradlew assembleFdroidRelease \
-            -Pandroid.injected.signing.store.file=${{ env.KEYSTORE_FILE }} \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/release.jks \
             -Pandroid.injected.signing.store.password=kuaiji123 \
             -Pandroid.injected.signing.key.alias=kuaiji \
             -Pandroid.injected.signing.key.password=kuaiji123 \
             --no-daemon --stacktrace
 
-      - name: Collect APKs
+      - name: Collect APK
         run: |
           mkdir -p output
           find V2rayNG/app/build/outputs/apk -name "*.apk" -exec cp {} output/ \;
           ls -lah output/
 
-      - name: Upload APK artifacts
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apks
+          name: universal-apk
           path: output/*.apk
           if-no-files-found: error
           retention-days: 30
-
-      - name: Create GitHub Release
-        if: success()
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: nightly-${{ github.run_id }}
-          name: 'Kuaiji VPN Nightly ${{ github.run_id }}'
-          generate_release_notes: true
-          fail_on_unmatched_files: true
-          files: |
-            output/*.apk
-
-permissions:
-  contents: write

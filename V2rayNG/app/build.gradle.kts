@@ -20,7 +20,7 @@ android {
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
             abi {
-                isEnable = true
+                isEnable = false
                 reset()
                 if (!abiFilterList.isNullOrEmpty()) {
                     include(*abiFilterList.toTypedArray())
